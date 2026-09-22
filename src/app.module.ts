@@ -4,13 +4,12 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './configuration';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema: Joi
-    })
-    AuthModule
-  ]
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+            validationSchema: configuration
+        }),
+        AuthModule
+    ]
 })
 export class AppModule {}

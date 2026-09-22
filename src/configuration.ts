@@ -1,32 +1,13 @@
+import { z } from "zod";
+
 type JwtLifetime = `${number}${'s' | 'm' | 'h' | 'd'}`
 
-export type AppConfig = { 
-    port: number,
-    database: {
-        url: string
-    },
-    redis: {
-        url: string
-    },
-    jwt: {
-        secret: string,
-        accessTokenLifeTime: JwtLifetime,
-        refreshTokenLifeTime: JwtLifetime
-    }
-}
-
-export default (): AppConfig => ({
-    port: Number(process.env.PORT ?? 3000),
-    database: {
-        url: process.env.DATABASE_URL as string
-    },
-    redis: {
-        url: process.env.REDIS_URL as string
-    },
-    jwt: {
-        secret: process.env.JWT_SECRET as string,
-        accessTokenLifeTime: process.env.ACCESS_TOKEN_LIFETIME as JwtLifetime,
-        refreshTokenLifeTime: process.env.REFRESH_TOKEN_LIFETIME as JwtLifetime
-    }
-
+export default z.object({
+    DATABASE_URL: z.string(),
+    REDIS_URL: z.string(),
+    PORT: z.coerce.number().default(3000),
+    JWT_SECRET: z.string().min(32),
+    ACCESS_TOKEN_LIFETIME: z.custom<JwtLifetime>().default("5m"),
+    REFRESH_TOKEN_LIFETIME: z.custom<JwtLifetime>().default("30d"),
+    MAX_TOKENS_PER_USER: z.coerce.number().default(5)
 })
