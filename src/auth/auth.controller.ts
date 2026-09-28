@@ -24,10 +24,11 @@ export class AuthController {
         private config: TypedConfigService,
     ) {}
 
-    readonly authCookiesOptions: CookieSerializeOptions = {
+    private readonly authCookiesOptions: CookieSerializeOptions = {
         httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+        secure: false, // true // todo! для прода вернруть
+        // sameSite: 'none', // todo! для прода вернруть
+        signed: true,
     };
 
     @Post('logout')
@@ -36,8 +37,14 @@ export class AuthController {
         @Res({ passthrough: true }) res: Response,
     ) {
         await this.authService.logout(refreshToken);
-        this.adapterHost.httpAdapter.clearCookie(res, AuthCookiesKeys.refreshTokenKey);
-        this.adapterHost.httpAdapter.clearCookie(res, AuthCookiesKeys.accessTokenKey);
+        this.adapterHost.httpAdapter.clearCookie(
+            res,
+            AuthCookiesKeys.refreshTokenKey,
+        );
+        this.adapterHost.httpAdapter.clearCookie(
+            res,
+            AuthCookiesKeys.accessTokenKey,
+        );
     }
 
     @Post('login')
@@ -83,7 +90,7 @@ export class AuthController {
             authTokens.accessToken,
             {
                 ...this.authCookiesOptions,
-                maxAge: this.config.get('ACCESS_TOKEN_LIFETIME') * 1000,
+                maxAge: this.config.get('ACCESS_TOKEN_LIFETIME'),
             },
         );
 
@@ -93,7 +100,7 @@ export class AuthController {
             authTokens.refreshToken,
             {
                 ...this.authCookiesOptions,
-                maxAge: this.config.get('REFRESH_TOKEN_LIFETIME') * 1000,
+                maxAge: this.config.get('REFRESH_TOKEN_LIFETIME'),
             },
         );
     }

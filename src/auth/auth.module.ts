@@ -20,7 +20,8 @@ import { TypedConfigService } from '../config/typedConfig.service.js';
                 
             })
         }),
-        DatabaseModule
+        TypedConfigModule,
+        DatabaseModule,
     ]
 })
 export class AuthModule {}

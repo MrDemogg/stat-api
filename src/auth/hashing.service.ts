@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import argon2 from "argon2"
 import crypto from "node:crypto"
-import { TypedConfigService } from '../config/typedConfig.service';
+import { TypedConfigService } from '../config/typedConfig.service.js';
 
 @Injectable()
 export class HashingService {
