@@ -18,18 +18,23 @@ import { TypedConfigService } from '../config/typedConfig.service.js';
 
 @Controller('auth')
 export class AuthController {
+    private readonly authCookiesOptions: CookieSerializeOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        signed: true,
+    };
+    
     constructor(
         private authService: AuthService,
         private adapterHost: HttpAdapterHost,
         private config: TypedConfigService,
-    ) {}
-
-    private readonly authCookiesOptions: CookieSerializeOptions = {
-        httpOnly: true,
-        secure: false, // true // todo! для прода вернруть
-        // sameSite: 'none', // todo! для прода вернруть
-        signed: true,
-    };
+    ) {
+        if (config.get("DEV_MODE")) { 
+            this.authCookiesOptions.secure = false;
+            this.authCookiesOptions.sameSite = undefined;
+        }
+    }
 
     @Post('logout')
     async logout(

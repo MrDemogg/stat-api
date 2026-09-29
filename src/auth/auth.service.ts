@@ -2,8 +2,7 @@ import {
     ConflictException,
     ForbiddenException,
     Injectable,
-    NotFoundException,
-    UnauthorizedException,
+    NotFoundException
 } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
 import { RedisService } from '../database/Redis/redis.service.js';
