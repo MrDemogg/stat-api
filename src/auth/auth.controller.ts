@@ -13,7 +13,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { AuthCookiesKeys } from './common/auth-cookies.keys.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { ConfirmUserDto } from './dto/confirm-user.dto.js';
-import { AuthTokens } from './common/auth-tokents.type.js';
+import { AuthTokens } from './common/types/auth-tokens.type.js';
 import { TypedConfigService } from '../config/typedConfig.service.js';
 
 @Controller('auth')
@@ -62,7 +62,6 @@ export class AuthController {
 
     @Post('register')
     async register(@Body() createUserDto: CreateUserDto) {
-        console.log(createUserDto);
         await this.authService.registrationRequest(createUserDto);
     }
 

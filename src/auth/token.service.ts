@@ -28,7 +28,7 @@ export class TokenService {
         });
     }
 
-    async verifyToken(refreshToken: string): Promise<TokenPayload> {
+    async verifyRefreshToken(refreshToken: string): Promise<TokenPayload> {
         let payload: TokenPayload
 
         try {
@@ -50,5 +50,13 @@ export class TokenService {
         }
 
         throw new UnauthorizedException('Refresh token is invalid');
+    }
+
+    async verifyAccessToken(accessToken: string): Promise<TokenPayload> { 
+        try {
+            return await this.jwt.verifyAsync(accessToken);
+        } catch { 
+            throw new UnauthorizedException("Access token is invalid")
+        }
     }
 }

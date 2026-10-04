@@ -2,6 +2,7 @@ model Metric {
     id Int @id @default(autoincrement())
     title String
     description String
+    ingestKey String @unique
 
     project Project @relation(fields: [projectId], references: [id])
     projectId Int
@@ -13,11 +14,11 @@ model Metric {
 
 model MetricPoint {
     id Int @id @default(autoincrement())
-    timestamp DateTime
+    date DateTime
     data String
     
     metricId Int
     metric Metric @relation(fields: [metricId], references: [id])
 
-    @@unique([metricId, timestamp])
+    @@unique([metricId, date])
 }

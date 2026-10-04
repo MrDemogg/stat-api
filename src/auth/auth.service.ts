@@ -15,7 +15,7 @@ import { HashingService } from './hashing.service.js';
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfirmUserDto } from './dto/confirm-user.dto.js';
-import { AuthTokens } from './common/auth-tokents.type.js';
+import { AuthTokens } from './common/types/auth-tokens.type.js';
 
 @Injectable()
 export class AuthService {
@@ -52,7 +52,7 @@ export class AuthService {
     }
 
     async logout(refreshToken: string) { 
-        const tokenPayload = await this.tokenService.verifyToken(refreshToken);
+        const tokenPayload = await this.tokenService.verifyRefreshToken(refreshToken);
         this.redis.client.lRem(RedisKeys.userRefreshTokens(tokenPayload.userId), 1, refreshToken);
     }
 
@@ -144,7 +144,7 @@ export class AuthService {
     }
 
     async refresh(refreshToken: string): Promise<string> {
-        const tokenPayload = await this.tokenService.verifyToken(refreshToken)
+        const tokenPayload = await this.tokenService.verifyRefreshToken(refreshToken)
         return await this.tokenService.getAccessToken(tokenPayload.userId);
     }
 
