@@ -7,6 +7,7 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AuthCookiesKeys } from './auth/common/auth-cookies.keys.js';
 
 async function bootstrap() {
     const env: Configuration = configurationSchema.parse(process.env);
@@ -20,10 +21,11 @@ async function bootstrap() {
 
     const config = new DocumentBuilder()
         .setTitle('StatApi')
-        .setDescription('StatApi API description')
         .setVersion('1.0')
-        .addTag('42')
+        .addCookieAuth(AuthCookiesKeys.refreshTokenKey)
+        .addCookieAuth(AuthCookiesKeys.accessTokenKey)
         .build();
+        
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, documentFactory);
 

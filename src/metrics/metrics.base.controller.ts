@@ -14,8 +14,11 @@ import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard.js';
 import { UpdateMetricDto } from './dto/metric/update-metric.dto.js';
 import { CreateMetricDto } from './dto/metric/create-metric.dto.js';
+import { ApiCookieAuth } from '@nestjs/swagger';
+import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
 
 @Controller(`projects/:${RouteParams.projectId}/metrics`)
+@ApiCookieAuth(AuthCookiesKeys.accessTokenKey)
 @UseGuards(AuthGuard, ProjectAccessGuard)
 export class MetricsController {
     constructor(private metricsService: MetricsService) {}

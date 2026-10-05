@@ -7,21 +7,22 @@ import { HashingService } from './hashing.service.js';
 import { JwtModule } from '@nestjs/jwt';
 import { TypedConfigModule } from '../config/typedConfig.module.js';
 import { TypedConfigService } from '../config/typedConfig.service.js';
+import { AuthGuard } from './guards/auth.guard.js';
 
 @Module({
-    providers: [AuthService, TokenService, HashingService],
+    providers: [AuthService, TokenService, HashingService, AuthGuard],
     controllers: [AuthController],
     imports: [
         JwtModule.registerAsync({
             imports: [TypedConfigModule],
             inject: [TypedConfigService],
             useFactory: (config: TypedConfigService) => ({
-                secret: config.get("JWT_SECRET"),
-                
-            })
+                secret: config.get('JWT_SECRET'),
+            }),
         }),
         TypedConfigModule,
         DatabaseModule,
-    ]
+    ],
+    exports: [TokenService, AuthGuard],
 })
 export class AuthModule {}

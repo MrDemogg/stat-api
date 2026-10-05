@@ -15,16 +15,22 @@ import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ResponseProjectDto } from './dto/response-project.dto.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
+import { ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse } from '@nestjs/swagger';
+import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
 
 @Controller('projects')
 // Созданный рядом ProjectAccessGuard не используется здесь по той причине,
 // что местный service при обращении к БД сразу проверяет одним запросом доступность
 // мне нравится экономить количество обращений к БД
+@ApiCookieAuth(AuthCookiesKeys.accessTokenKey)
 @UseGuards(AuthGuard)
 export class ProjectsController {
     constructor(private projectsService: ProjectsService) {}
 
     @Get()
+    @ApiOkResponse({
+        description: "Array of user's projects"
+    })
     async findAll(
         @CurrentUserId() userId: number,
     ): Promise<ResponseProjectDto[]> {
@@ -32,6 +38,10 @@ export class ProjectsController {
     }
 
     @Patch(`:${RouteParams.projectId}`)
+    @ApiOkResponse({
+        description: "Updated project information"
+    })
+    @ApiNotFoundResponse()
     async update(
         @CurrentUserId() userId: number,
         @IntParam(RouteParams.projectId) projectId: number,
@@ -49,6 +59,7 @@ export class ProjectsController {
     }
 
     @Delete(`:${RouteParams.projectId}`)
+    @ApiNotFoundResponse()
     async remove(
         @CurrentUserId() userId: number,
         @IntParam(RouteParams.projectId) projectId: number,

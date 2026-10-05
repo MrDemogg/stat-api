@@ -14,7 +14,6 @@ import { TypedConfigService } from '../config/typedConfig.service.js';
 import { HashingService } from './hashing.service.js';
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
-import { ConfirmUserDto } from './dto/confirm-user.dto.js';
 import { AuthTokens } from './common/types/auth-tokens.type.js';
 
 @Injectable()
@@ -113,11 +112,9 @@ export class AuthService {
     }
 
     async registrationConfirm(
-        confirmUserDto: ConfirmUserDto,
+        regRegId: string,
     ): Promise<AuthTokens> {
-        const regReqKey = RedisKeys.registrationRequest(
-            confirmUserDto.regReqId,
-        );
+        const regReqKey = RedisKeys.registrationRequest(regRegId);
         const regJsonData = await this.redis.client.get(regReqKey);
 
         if (!regJsonData)

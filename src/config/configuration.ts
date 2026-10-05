@@ -7,7 +7,7 @@ import { z } from "zod";
 //     .transform(val => val as JwtLifetime);
 
 export const configurationSchema = z.object({
-    DEV_MODE: z.boolean().default(false),
+    DEV_MODE: z.coerce.boolean().default(false),
     //urls
     DATABASE_URL: z.string().min(1),
     REDIS_URL: z.string().startsWith('redis://'),

@@ -5,6 +5,8 @@ import { TypedConfigModule } from './config/typedConfig.module.js';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { AppController } from './app.controller.js';
+import { ProjectsModule } from './projects/projects.module.js';
+import { MetricsModule } from './metrics/metrics.module.js';
 
 @Module({
     controllers: [AppController],
@@ -29,6 +31,8 @@ import { AppController } from './app.controller.js';
         }),
         TypedConfigModule,
         AuthModule,
+        ProjectsModule,
+        MetricsModule
     ],
 })
 export class AppModule {}
