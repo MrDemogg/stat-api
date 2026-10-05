@@ -14,7 +14,7 @@ import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard.js';
 import { UpdateMetricDto } from './dto/metric/update-metric.dto.js';
 import { CreateMetricDto } from './dto/metric/create-metric.dto.js';
-import { ApiCookieAuth } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse } from '@nestjs/swagger';
 import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
 
 @Controller(`projects/:${RouteParams.projectId}/metrics`)
@@ -24,6 +24,9 @@ export class MetricsController {
     constructor(private metricsService: MetricsService) {}
 
     @Get()
+    @ApiOkResponse({
+        description: "Array of project's metrics"
+    })
     async findAll(
         @IntParam(RouteParams.projectId) projectId: number,
     ) {
@@ -31,6 +34,10 @@ export class MetricsController {
     }
 
     @Patch(`:${RouteParams.metricId}`)
+    @ApiOkResponse({
+        description: "Metric update"
+    })
+    @ApiNotFoundResponse()
     async update(
         @IntParam(RouteParams.projectId) projectId: number,
         @IntParam(RouteParams.metricId) metricId: number,
@@ -40,6 +47,9 @@ export class MetricsController {
     }
 
     @Post()
+    @ApiCreatedResponse({
+        description: "Metric created"
+    })
     async create(
         @IntParam(RouteParams.projectId) projectId: number,
         @Body() createMetricDto : CreateMetricDto
@@ -48,6 +58,10 @@ export class MetricsController {
     }
 
     @Delete(`:${RouteParams.metricId}`)
+    @ApiOkResponse({
+        description: "Metric removed"
+    })
+    @ApiNotFoundResponse()
     async remove(
         @IntParam(RouteParams.projectId) projectId: number,
         @IntParam(RouteParams.metricId) metricId: number
@@ -56,6 +70,10 @@ export class MetricsController {
     }
 
     @Delete(`:${RouteParams.metricId}/:${RouteParams.metricPointId}`)
+    @ApiOkResponse({
+        description: "Metric's point removed"
+    })
+    @ApiNotFoundResponse()
     async removePoint(
         @IntParam(RouteParams.projectId) projectId: number,
         @IntParam(RouteParams.metricId) metricId: number,

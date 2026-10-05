@@ -51,6 +51,9 @@ export class ProjectsController {
     }
 
     @Post()
+    @ApiCreatedResponse({
+        description: "Project created"
+    })
     async create(
         @CurrentUserId() userId: number,
         @Body() createProjectDto: CreateProjectDto,
@@ -59,6 +62,9 @@ export class ProjectsController {
     }
 
     @Delete(`:${RouteParams.projectId}`)
+    @ApiOkResponse({
+        description: "Project removed"
+    })
     @ApiNotFoundResponse()
     async remove(
         @CurrentUserId() userId: number,
