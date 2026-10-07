@@ -9,6 +9,6 @@ import { ProjectAccessGuard } from './guards/project-access.guard.js';
     controllers: [ProjectsController],
     providers: [ProjectsService, ProjectAccessGuard],
     imports: [DatabaseModule, AuthModule],
-    exports: [ProjectAccessGuard]
+    exports: [ProjectAccessGuard],
 })
 export class ProjectsModule {}

@@ -9,6 +9,7 @@ import {
     Post,
     Res,
     SignedCookies,
+    UseGuards,
 } from '@nestjs/common';
 import { AuthUserDto } from './dto/auth-user.dto.js';
 import { AuthService } from './auth.service.js';
@@ -21,13 +22,15 @@ import {
     ApiConflictResponse,
     ApiCookieAuth,
     ApiCreatedResponse,
-    ApiDefaultResponse,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { RouteParams } from '../common/constants/route-params.js';
+import { ResponseUserDto } from './dto/response-user.dto.js';
+import { AuthGuard } from './guards/auth.guard.js';
+import { CurrentUserId } from './decorators/user-id.decorator.js';
 
 @Controller('auth')
 export class AuthController {
@@ -70,11 +73,9 @@ export class AuthController {
     async confirm(
         @Param(RouteParams.regReqId) regRegId: string,
         @Res({ passthrough: true }) res: Response,
-    ) {
-        this.setAuthTokens(
-            res,
-            await this.authService.registrationConfirm(regRegId),
-        );
+    ): Promise<void> {
+        const authTokens = await this.authService.registrationConfirm(regRegId);
+        this.setAuthTokens(res, authTokens);
     }
 
     @Post('login')
@@ -91,8 +92,28 @@ export class AuthController {
     async login(
         @Body() authUserDto: AuthUserDto,
         @Res({ passthrough: true }) res: Response,
-    ) {
-        this.setAuthTokens(res, await this.authService.login(authUserDto));
+    ): Promise<void> {
+        const authTokens = await this.authService.login(authUserDto);
+        this.setAuthTokens(res, authTokens);
+    }
+
+    @Get('me')
+    @UseGuards(AuthGuard)
+    @ApiOkResponse({
+        description: 'Current user profile',
+        type: ResponseUserDto,
+    })
+    @ApiUnauthorizedResponse({
+        description: 'Access token invalid',
+    })
+    @ApiNotFoundResponse({
+        description: 'User not found',
+    })
+    @ApiCookieAuth(AuthCookiesKeys.accessTokenKey)
+    async getCurrentUser(
+        @CurrentUserId() userId: number,
+    ): Promise<ResponseUserDto> {
+        return this.authService.getCurrentUser(userId);
     }
 
     @Get('refresh')
@@ -106,17 +127,15 @@ export class AuthController {
     async refresh(
         @Res({ passthrough: true }) res: Response,
         @SignedCookies(AuthCookiesKeys.refreshTokenKey) refreshToken: string,
-    ) {
-        this.setAuthTokens(res, {
-            accessToken: await this.authService.refresh(refreshToken),
-            refreshToken: refreshToken,
-        });
+    ): Promise<void> {
+        const authTokens = await this.authService.refresh(refreshToken);
+        this.setAuthTokens(res, authTokens);
     }
 
     @Post('logout')
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
-        description: "Logged out"
+        description: 'Logged out',
     })
     @ApiUnauthorizedResponse({
         description: 'Refresh token invalid',

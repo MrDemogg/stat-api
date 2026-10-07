@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // export type JwtLifetime = `${number}${'s' | 'm' | 'h' | 'd'}`
 
@@ -26,4 +26,5 @@ export const configurationSchema = z.object({
 
 export type Configuration = z.infer<typeof configurationSchema>;
 
-export default (env: Record<string, unknown>): Configuration => configurationSchema.parse(env);
+export default (env: Record<string, unknown>): Configuration =>
+    configurationSchema.parse(env);

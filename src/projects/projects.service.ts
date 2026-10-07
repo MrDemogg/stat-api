@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { ResponseProjectDto } from './dto/response-project.dto.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
 import { PrismaUtils } from '../database/Prisma/prisma.utils.js';
+import { ProjectUpdateInput } from '../generated/prisma/models.js';
 
 @Injectable()
 export class ProjectsService {
@@ -28,16 +29,17 @@ export class ProjectsService {
         projectId: number,
         newProjectInfo: UpdateProjectDto,
     ) {
+        if (!newProjectInfo.title && !newProjectInfo.description) { 
+            throw new BadRequestException("Body must have title or description")
+        }
+
         try {
             await this.prismaSerive.project.update({
                 where: {
                     ownerId: ownerId,
                     id: projectId,
                 },
-                data: {
-                    title: newProjectInfo.title,
-                    description: newProjectInfo.description,
-                },
+                data: newProjectInfo, // задаю newProjectInfo напрямую потому что поля называются одинаково и prisma пропустит незаданные поля
             });
         } catch (e) {
             if (PrismaUtils.isPrismaNotFoundError(e)) {

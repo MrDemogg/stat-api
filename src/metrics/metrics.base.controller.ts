@@ -14,8 +14,15 @@ import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard.js';
 import { UpdateMetricDto } from './dto/metric/update-metric.dto.js';
 import { CreateMetricDto } from './dto/metric/create-metric.dto.js';
-import { ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+    ApiBadRequestResponse,
+    ApiCookieAuth,
+    ApiCreatedResponse,
+    ApiNotFoundResponse,
+    ApiOkResponse,
+} from '@nestjs/swagger';
 import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
+import { ResponseMetricDto } from './dto/metric/response-metric.dto.js';
 
 @Controller(`projects/:${RouteParams.projectId}/metrics`)
 @ApiCookieAuth(AuthCookiesKeys.accessTokenKey)
@@ -25,60 +32,66 @@ export class MetricsController {
 
     @Get()
     @ApiOkResponse({
-        description: "Array of project's metrics"
+        description: "Array of project's metrics",
+        type: [ResponseMetricDto]
     })
-    async findAll(
-        @IntParam(RouteParams.projectId) projectId: number,
-    ) {
+    async findAll(@IntParam(RouteParams.projectId) projectId: number): Promise<ResponseMetricDto[]> {
         return await this.metricsService.findAll(projectId);
     }
 
     @Patch(`:${RouteParams.metricId}`)
     @ApiOkResponse({
-        description: "Metric update"
+        description: 'Metric update',
+    })
+    @ApiBadRequestResponse({
+        description: 'Title and description are not setted',
     })
     @ApiNotFoundResponse()
     async update(
         @IntParam(RouteParams.projectId) projectId: number,
         @IntParam(RouteParams.metricId) metricId: number,
-        @Body() updateMetricDto : UpdateMetricDto
+        @Body() updateMetricDto: UpdateMetricDto,
     ) {
         await this.metricsService.update(projectId, metricId, updateMetricDto);
     }
 
     @Post()
     @ApiCreatedResponse({
-        description: "Metric created"
+        description: 'Metric created',
     })
     async create(
         @IntParam(RouteParams.projectId) projectId: number,
-        @Body() createMetricDto : CreateMetricDto
+        @Body() createMetricDto: CreateMetricDto,
     ) {
         await this.metricsService.create(projectId, createMetricDto);
     }
 
     @Delete(`:${RouteParams.metricId}`)
     @ApiOkResponse({
-        description: "Metric removed"
+        description: 'Metric removed',
     })
     @ApiNotFoundResponse()
     async remove(
         @IntParam(RouteParams.projectId) projectId: number,
-        @IntParam(RouteParams.metricId) metricId: number
+        @IntParam(RouteParams.metricId) metricId: number,
     ) {
         await this.metricsService.remove(projectId, metricId);
     }
 
     @Delete(`:${RouteParams.metricId}/:${RouteParams.metricPointId}`)
     @ApiOkResponse({
-        description: "Metric's point removed"
+        description: "Metric's point removed",
     })
     @ApiNotFoundResponse()
     async removePoint(
         @IntParam(RouteParams.projectId) projectId: number,
         @IntParam(RouteParams.metricId) metricId: number,
-        @IntParam(RouteParams.metricPointId) metricPointId: number
-    ) { 
-        await this.metricsService.removePoint(projectId, metricId, metricPointId);
+        @IntParam(RouteParams.metricPointId) metricPointId: number,
+    ) {
+        await this.metricsService.removePoint(
+            projectId,
+            metricId,
+            metricPointId,
+        );
     }
 }

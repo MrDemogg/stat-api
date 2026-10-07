@@ -2,12 +2,12 @@ import {
     ConflictException,
     ForbiddenException,
     Injectable,
-    NotFoundException
+    NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
 import { RedisService } from '../database/Redis/redis.service.js';
 import { AuthUserDto } from './dto/auth-user.dto.js';
-import { TokenService } from './token.service.js';
+import { TokenPayload, TokenService } from './token.service.js';
 import { RedisKeys } from '../database/Redis/redis.keys.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { TypedConfigService } from '../config/typedConfig.service.js';
@@ -15,6 +15,7 @@ import { HashingService } from './hashing.service.js';
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
 import { AuthTokens } from './common/types/auth-tokens.type.js';
+import { ResponseUserDto } from './dto/response-user.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,7 @@ export class AuthService {
         private tokenService: TokenService,
         private config: TypedConfigService,
         private hashing: HashingService,
-        private mailer: MailerService
+        private mailer: MailerService,
     ) {}
 
     async login(authUserDto: AuthUserDto): Promise<AuthTokens> {
@@ -44,15 +45,25 @@ export class AuthService {
         if (!passMatch)
             throw new ForbiddenException('Invalid username or password');
 
-        const accessToken = await this.tokenService.getAccessToken(user.id);
-        const refreshToken = await this.createSession(user.id);
+        const tokensPayload: TokenPayload = {
+            userId: user.id,
+        };
+
+        const accessToken =
+            await this.tokenService.getAccessToken(tokensPayload);
+        const refreshToken = await this.createSession(tokensPayload);
 
         return { accessToken, refreshToken };
     }
 
-    async logout(refreshToken: string) { 
-        const tokenPayload = await this.tokenService.verifyRefreshToken(refreshToken);
-        this.redis.client.lRem(RedisKeys.userRefreshTokens(tokenPayload.userId), 1, refreshToken);
+    async logout(refreshToken: string) {
+        const tokenPayload =
+            await this.tokenService.verifyRefreshToken(refreshToken);
+        await this.redis.client.lRem(
+            RedisKeys.userRefreshTokens(tokenPayload.userId),
+            1,
+            this.hashing.fastHash(refreshToken),
+        );
     }
 
     async registrationRequest(createUserDto: CreateUserDto) {
@@ -76,7 +87,8 @@ export class AuthService {
 
         const regId = uuidv4();
 
-        const confirmLink = this.config.get("REGISTRATION_CONFIRM_FRONTEND_URL") + regId;
+        const confirmLink =
+            this.config.get('REGISTRATION_CONFIRM_FRONTEND_URL') + regId;
 
         try {
             await this.mailer.sendMail({
@@ -85,12 +97,12 @@ export class AuthService {
                 template: 'regConfirm',
                 context: {
                     username: createUserDto.username,
-                    confirmLink
+                    confirmLink,
                 },
             });
-        } catch (e) { 
-            console.error("Mailer may not be set properly:")
-            console.error(e)
+        } catch (e) {
+            console.error('Mailer may not be set properly:');
+            console.error(e);
             console.log(confirmLink);
         }
 
@@ -111,9 +123,7 @@ export class AuthService {
         );
     }
 
-    async registrationConfirm(
-        regRegId: string,
-    ): Promise<AuthTokens> {
+    async registrationConfirm(regRegId: string): Promise<AuthTokens> {
         const regReqKey = RedisKeys.registrationRequest(regRegId);
         const regJsonData = await this.redis.client.get(regReqKey);
 
@@ -134,19 +144,47 @@ export class AuthService {
             },
         });
 
-        const accessToken = await this.tokenService.getAccessToken(user.id);
-        const refreshToken = await this.createSession(user.id);
+        const tokensPayload: TokenPayload = { userId: user.id };
+
+        const accessToken =
+            await this.tokenService.getAccessToken(tokensPayload);
+        const refreshToken = await this.createSession(tokensPayload);
 
         return { accessToken, refreshToken };
     }
 
-    async refresh(refreshToken: string): Promise<string> {
-        const tokenPayload = await this.tokenService.verifyRefreshToken(refreshToken)
-        return await this.tokenService.getAccessToken(tokenPayload.userId);
+    async refresh(refreshToken: string): Promise<AuthTokens> {
+        const refreshTokenPayload =
+            await this.tokenService.verifyRefreshToken(refreshToken);
+        const accessToken = await this.tokenService.getAccessToken(
+            refreshTokenPayload,
+        );
+        return {
+            accessToken,
+            refreshToken,
+        };
     }
 
-    private async createSession(userId: number): Promise<string> {
-        const redisRefetchTokenKey = RedisKeys.userRefreshTokens(userId);
+    async getCurrentUser(userId: number): Promise<ResponseUserDto> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                username: true,
+            },
+        });
+
+        if (!user) throw new NotFoundException('User not found');
+
+        return user;
+    }
+
+    private async createSession(
+        refreshTokenPayload: TokenPayload,
+    ): Promise<string> {
+        const redisRefetchTokenKey = RedisKeys.userRefreshTokens(
+            refreshTokenPayload.userId,
+        );
 
         const tokens = await this.redis.client.LRANGE(
             redisRefetchTokenKey,
@@ -158,7 +196,8 @@ export class AuthService {
         if (tokens.length == maxTokensPerUser)
             await this.redis.client.lPop(redisRefetchTokenKey);
 
-        const refreshToken = await this.tokenService.getRefreshToken(userId);
+        const refreshToken =
+            await this.tokenService.getRefreshToken(refreshTokenPayload);
         const tokenHash = this.hashing.fastHash(refreshToken);
 
         await this.redis.client.rPush(redisRefetchTokenKey, tokenHash);

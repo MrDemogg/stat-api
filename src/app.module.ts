@@ -32,7 +32,7 @@ import { MetricsModule } from './metrics/metrics.module.js';
         TypedConfigModule,
         AuthModule,
         ProjectsModule,
-        MetricsModule
+        MetricsModule,
     ],
 })
 export class AppModule {}

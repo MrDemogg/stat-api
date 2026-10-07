@@ -5,7 +5,9 @@ import { RedisService } from '../database/Redis/redis.service.js';
 import { RedisKeys } from '../database/Redis/redis.keys.js';
 import { HashingService } from './hashing.service.js';
 
-export type TokenPayload = { userId: number };
+export type TokenPayload = {
+    userId: number
+};
 
 @Injectable()
 export class TokenService {
@@ -16,24 +18,23 @@ export class TokenService {
         private hashing: HashingService,
     ) {}
 
-    async getAccessToken(userId: number): Promise<string> {
-        return await this.jwt.signAsync({ userId } as TokenPayload, {
+    async getAccessToken(tokenPayload: TokenPayload): Promise<string> {
+        return await this.jwt.signAsync(tokenPayload, {
             expiresIn: this.typedConfig.get('ACCESS_TOKEN_LIFETIME'),
         });
     }
 
-    async getRefreshToken(userId: number): Promise<string> {
-        return await this.jwt.signAsync({ userId } as TokenPayload, {
+    async getRefreshToken(tokenPayload: TokenPayload): Promise<string> {
+        return await this.jwt.signAsync(tokenPayload, {
             expiresIn: this.typedConfig.get('REFRESH_TOKEN_LIFETIME'),
         });
     }
 
     async verifyRefreshToken(refreshToken: string): Promise<TokenPayload> {
-        let payload: TokenPayload
+        let payload: TokenPayload;
 
         try {
-            payload =
-                await this.jwt.verifyAsync(refreshToken);
+            payload = await this.jwt.verifyAsync(refreshToken);
         } catch {
             throw new UnauthorizedException('Refresh token is invalid');
         }
@@ -52,11 +53,11 @@ export class TokenService {
         throw new UnauthorizedException('Refresh token is invalid');
     }
 
-    async verifyAccessToken(accessToken: string): Promise<TokenPayload> { 
+    async verifyAccessToken(accessToken: string): Promise<TokenPayload> {
         try {
             return await this.jwt.verifyAsync(accessToken);
-        } catch { 
-            throw new UnauthorizedException("Access token is invalid")
+        } catch {
+            throw new UnauthorizedException('Access token is invalid');
         }
     }
 }

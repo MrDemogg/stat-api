@@ -1,13 +1,13 @@
-import { Controller, Get } from "@nestjs/common";
-import { ApiOperation, ApiQuery } from "@nestjs/swagger";
+import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 @Controller()
-export class AppController { 
+export class AppController {
     @ApiOperation({
-        summary: "Checks server's life"
+        summary: "Checks server's life",
     })
-    @Get("alive")
-    alive() { 
+    @Get('alive')
+    alive() {
         return true;
     }
 }

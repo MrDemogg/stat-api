@@ -15,7 +15,7 @@ import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ResponseProjectDto } from './dto/response-project.dto.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
-import { ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse } from '@nestjs/swagger';
 import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
 
 @Controller('projects')
@@ -29,7 +29,8 @@ export class ProjectsController {
 
     @Get()
     @ApiOkResponse({
-        description: "Array of user's projects"
+        description: "Array of user's projects",
+        type: [ResponseProjectDto]
     })
     async findAll(
         @CurrentUserId() userId: number,
@@ -42,6 +43,9 @@ export class ProjectsController {
         description: "Updated project information"
     })
     @ApiNotFoundResponse()
+    @ApiBadRequestResponse({
+        description: "Title and description are empty"
+    })
     async update(
         @CurrentUserId() userId: number,
         @IntParam(RouteParams.projectId) projectId: number,

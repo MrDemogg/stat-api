@@ -10,7 +10,7 @@ export class MetricsIngestController {
     @Post(`:${RouteParams.metricIngest}`)
     async addPoint(
         @Param(RouteParams.metricIngest) ingestKey: string,
-        @Body() createMetricPointDto: CreateMetricPointDto
+        @Body() createMetricPointDto: CreateMetricPointDto,
     ) {
         await this.metricsService.pushPoint(ingestKey, createMetricPointDto);
     }

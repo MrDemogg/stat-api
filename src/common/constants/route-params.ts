@@ -3,5 +3,5 @@ export const RouteParams = {
     metricId: 'metricId',
     metricPointId: 'metricPointId',
     metricIngest: 'metricIngest',
-    regReqId: "regReqId"
-}
+    regReqId: 'regReqId',
+};

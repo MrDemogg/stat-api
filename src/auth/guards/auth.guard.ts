@@ -22,6 +22,8 @@ export class AuthGuard implements CanActivate {
             const tokenPayload = await this.tokenService.verifyAccessToken(accessToken);
 
             req.userId = tokenPayload.userId
+
+            return true;
         }
 
         throw new UnauthorizedException('User not authorized');

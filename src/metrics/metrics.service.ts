@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
 import { ResponseMetricDto } from './dto/metric/response-metric.dto.js';
 import { UpdateMetricDto } from './dto/metric/update-metric.dto.js';
@@ -31,16 +31,17 @@ export class MetricsService {
     }
 
     async update(projectId: number, id: number, newInfo: UpdateMetricDto) {
+        if (!newInfo.title && !newInfo.description) { 
+            throw new BadRequestException("Body must have title or description")
+        }
+
         try {
             await this.prismaSerivce.metric.update({
                 where: {
                     id: id,
                     projectId: projectId,
                 },
-                data: {
-                    title: newInfo.title,
-                    description: newInfo.description,
-                },
+                data: newInfo,
             });
         } catch (e) {
             if (PrismaUtils.isPrismaNotFoundError(e)) {
@@ -54,6 +55,8 @@ export class MetricsService {
     async create(projectId: number, info: CreateMetricDto) {
         const maxAttempts = 5; // не знаю стоит ли это куда-то выносить для внешней настройки
 
+        // uuidv4 конечно генерирует ключи, которые маловероятно повторяться, но так намного больше гарантий
+        // цикл for как компромисс между отсутствием повторных попыток и циклом while true
         for (let att = 0; att < maxAttempts; att++) {
             const ingestKey = uuidv4();
 
@@ -67,6 +70,8 @@ export class MetricsService {
                     },
                 });
             } catch (e) {
+                // нельзя допустить чтобы цикл продолжался из-за ошибки об уникальности при условии, 
+                // что причиной ошибки является title
                 if (
                     e instanceof Prisma.PrismaClientKnownRequestError &&
                     PrismaUtils.isPrismaUniqueConstraintError(e) &&
@@ -127,6 +132,8 @@ export class MetricsService {
     }
 
     async pushPoint(ingestKey: string, pointInfo: CreateMetricPointDto) {
+        // Проверки на ошибку об уникальности date решил не делать
+        // Date генерируется в реальном времени прям тут при запросе
         await this.prismaSerivce.metricPoint.create({
             data: {
                 data: pointInfo.data,

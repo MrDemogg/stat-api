@@ -12,7 +12,13 @@ import { AuthCookiesKeys } from './auth/common/auth-cookies.keys.js';
 async function bootstrap() {
     const env: Configuration = configurationSchema.parse(process.env);
     
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule,
+        {
+            cookies: {
+                secret: env.COOKIES_SECRET
+            }
+        }
+    );
     app.use(cookieParser(env.COOKIES_SECRET))
 
     app.useGlobalPipes(new ValidationPipe({
