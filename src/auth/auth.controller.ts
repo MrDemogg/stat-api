@@ -2,14 +2,12 @@ import {
     Body,
     Controller,
     CookieSerializeOptions,
-    Get,
     HttpCode,
     HttpStatus,
     Param,
     Post,
     Res,
     SignedCookies,
-    UseGuards,
 } from '@nestjs/common';
 import { AuthUserDto } from './dto/auth-user.dto.js';
 import { AuthService } from './auth.service.js';
@@ -29,8 +27,6 @@ import {
 } from '@nestjs/swagger';
 import { RouteParams } from '../common/constants/route-params.js';
 import { ResponseUserDto } from './dto/response-user.dto.js';
-import { AuthGuard } from './guards/auth.guard.js';
-import { CurrentUserId } from './decorators/user-id.decorator.js';
 
 @Controller('auth')
 export class AuthController {
@@ -70,12 +66,16 @@ export class AuthController {
     @ApiNotFoundResponse({
         description: 'Registration request not found',
     })
+    @ApiConflictResponse({
+        description: 'User with this username or email already exists',
+    })
     async confirm(
         @Param(RouteParams.regReqId) regRegId: string,
         @Res({ passthrough: true }) res: Response,
-    ): Promise<void> {
-        const authTokens = await this.authService.registrationConfirm(regRegId);
-        this.setAuthTokens(res, authTokens);
+    ): Promise<ResponseUserDto> {
+        const authData = await this.authService.registrationConfirm(regRegId);
+        this.setAuthTokens(res, authData.tokens);
+        return authData.userData;
     }
 
     @Post('login')
@@ -92,31 +92,13 @@ export class AuthController {
     async login(
         @Body() authUserDto: AuthUserDto,
         @Res({ passthrough: true }) res: Response,
-    ): Promise<void> {
-        const authTokens = await this.authService.login(authUserDto);
-        this.setAuthTokens(res, authTokens);
-    }
-
-    @Get('me')
-    @UseGuards(AuthGuard)
-    @ApiOkResponse({
-        description: 'Current user profile',
-        type: ResponseUserDto,
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Access token invalid',
-    })
-    @ApiNotFoundResponse({
-        description: 'User not found',
-    })
-    @ApiCookieAuth(AuthCookiesKeys.accessTokenKey)
-    async getCurrentUser(
-        @CurrentUserId() userId: number,
     ): Promise<ResponseUserDto> {
-        return this.authService.getCurrentUser(userId);
+        const authData = await this.authService.login(authUserDto);
+        this.setAuthTokens(res, authData.tokens);
+        return authData.userData;
     }
 
-    @Get('refresh')
+    @Post('refresh')
     @ApiOkResponse({
         description: 'Access token refreshed',
     })
@@ -127,9 +109,11 @@ export class AuthController {
     async refresh(
         @Res({ passthrough: true }) res: Response,
         @SignedCookies(AuthCookiesKeys.refreshTokenKey) refreshToken: string,
-    ): Promise<void> {
-        const authTokens = await this.authService.refresh(refreshToken);
-        this.setAuthTokens(res, authTokens);
+    ): Promise<ResponseUserDto> {
+        const authData = await this.authService.refresh(refreshToken);
+        this.setAuthTokens(res, authData.tokens);
+
+        return authData.userData;
     }
 
     @Post('logout')

@@ -11,7 +11,8 @@ export const configurationSchema = z.object({
     //urls
     DATABASE_URL: z.string().min(1),
     REDIS_URL: z.string().startsWith('redis://'),
-    REGISTRATION_CONFIRM_FRONTEND_URL: z.url().endsWith('/'),
+    FRONTEND_URL: z.url(),
+    REGISTRATION_CONFIRM_FRONTEND_ENDPOINT: z.string(),
     PORT: z.coerce.number().int().positive().default(3000),
     //secrets
     JWT_SECRET: z.string().min(32),

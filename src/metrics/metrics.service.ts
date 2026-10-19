@@ -1,55 +1,46 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
-import { ResponseMetricDto } from './dto/metric/response-metric.dto.js';
-import { UpdateMetricDto } from './dto/metric/update-metric.dto.js';
-import { PrismaClientKnownRequestError } from '../generated/prisma/internal/prismaNamespace.js';
-import { CreateMetricDto } from './dto/metric/create-metric.dto.js';
+import { ResponseMetricDto } from './dto/response-metric.dto.js';
+import { UpdateMetricDto } from './dto/update-metric.dto.js';
+import { CreateMetricDto } from './dto/create-metric.dto.js';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaUtils } from '../database/Prisma/prisma.utils.js';
-import { CreateMetricPointDto } from './dto/metric-point/create-metric-point.dto.js';
 import { Prisma } from '../generated/prisma/client.js';
 
 export class MetricsService {
-    constructor(private prismaSerivce: PrismaService) {}
+    constructor(private prismaService: PrismaService) {}
 
-    async findAll(projectId: number): Promise<ResponseMetricDto[]> {
-        return await this.prismaSerivce.metric.findMany({
+    async findAll(
+        projectId: number,
+        from?: number,
+        to?: number,
+    ): Promise<ResponseMetricDto[]> {
+        return await this.prismaService.metric.findMany({
             where: {
                 projectId: projectId,
             },
             omit: {
                 projectId: true,
             },
-            include: {
-                points: {
-                    omit: {
-                        metricId: true,
-                    },
-                },
-            },
+            skip: from,
+            take: to,
         });
     }
 
     async update(projectId: number, id: number, newInfo: UpdateMetricDto) {
-        if (!newInfo.title && !newInfo.description) { 
-            throw new BadRequestException("Body must have title or description")
+        if (!newInfo.title && !newInfo.description) {
+            throw new BadRequestException(
+                'Body must have title or description',
+            );
         }
 
-        try {
-            await this.prismaSerivce.metric.update({
-                where: {
-                    id: id,
-                    projectId: projectId,
-                },
-                data: newInfo,
-            });
-        } catch (e) {
-            if (PrismaUtils.isPrismaNotFoundError(e)) {
-                throw new NotFoundException();
-            }
-
-            throw e;
-        }
+        await this.prismaService.metric.update({
+            where: {
+                id: id,
+                projectId: projectId,
+            },
+            data: newInfo,
+        });
     }
 
     async create(projectId: number, info: CreateMetricDto) {
@@ -61,7 +52,7 @@ export class MetricsService {
             const ingestKey = uuidv4();
 
             try {
-                return await this.prismaSerivce.metric.create({
+                return await this.prismaService.metric.create({
                     data: {
                         title: info.title,
                         description: info.title,
@@ -70,7 +61,7 @@ export class MetricsService {
                     },
                 });
             } catch (e) {
-                // нельзя допустить чтобы цикл продолжался из-за ошибки об уникальности при условии, 
+                // нельзя допустить чтобы цикл продолжался из-за ошибки об уникальности при условии,
                 // что причиной ошибки является title
                 if (
                     e instanceof Prisma.PrismaClientKnownRequestError &&
@@ -80,13 +71,9 @@ export class MetricsService {
                     Array.isArray(e.meta['target'])
                 ) {
                     const target: string[] = e.meta['target'];
-                    if (target.includes('title')) {
-                        throw new ConflictException(
-                            'Metric with this title already exists',
-                        );
+                    if (!target.includes('title')) {
+                        continue;
                     }
-
-                    continue;
                 }
 
                 throw e;
@@ -95,54 +82,10 @@ export class MetricsService {
     }
 
     async remove(projectId: number, metricId: number) {
-        try {
-            await this.prismaSerivce.metric.delete({
-                where: {
-                    id: metricId,
-                    projectId: projectId,
-                },
-            });
-        } catch (e) {
-            if (PrismaUtils.isPrismaNotFoundError(e)) {
-                throw new NotFoundException();
-            }
-
-            throw e;
-        }
-    }
-
-    async removePoint(projectId: number, metricId: number, pointId: number) {
-        try {
-            await this.prismaSerivce.metricPoint.delete({
-                where: {
-                    id: pointId,
-                    metric: {
-                        id: metricId,
-                        projectId: projectId,
-                    },
-                },
-            });
-        } catch (e) {
-            if (PrismaUtils.isPrismaNotFoundError(e)) {
-                throw new NotFoundException();
-            }
-
-            throw e;
-        }
-    }
-
-    async pushPoint(ingestKey: string, pointInfo: CreateMetricPointDto) {
-        // Проверки на ошибку об уникальности date решил не делать
-        // Date генерируется в реальном времени прям тут при запросе
-        await this.prismaSerivce.metricPoint.create({
-            data: {
-                data: pointInfo.data,
-                date: new Date(),
-                metric: {
-                    connect: {
-                        ingestKey: ingestKey,
-                    },
-                },
+        await this.prismaService.metric.delete({
+            where: {
+                id: metricId,
+                projectId: projectId,
             },
         });
     }

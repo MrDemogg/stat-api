@@ -14,8 +14,9 @@ import { TypedConfigService } from '../config/typedConfig.service.js';
 import { HashingService } from './hashing.service.js';
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
-import { AuthTokens } from './common/types/auth-tokens.type.js';
 import { ResponseUserDto } from './dto/response-user.dto.js';
+import { AuthData } from './common/types/auth-data.type.js';
+import { PrismaUtils } from '../database/Prisma/prisma.utils.js';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,7 @@ export class AuthService {
         private mailer: MailerService,
     ) {}
 
-    async login(authUserDto: AuthUserDto): Promise<AuthTokens> {
+    async login(authUserDto: AuthUserDto): Promise<AuthData> {
         const user = await this.prisma.user.findUnique({
             where: {
                 username: authUserDto.username,
@@ -53,7 +54,16 @@ export class AuthService {
             await this.tokenService.getAccessToken(tokensPayload);
         const refreshToken = await this.createSession(tokensPayload);
 
-        return { accessToken, refreshToken };
+        return {
+            tokens: {
+                accessToken,
+                refreshToken,
+            },
+            userData: {
+                id: user.id,
+                username: user.username,
+            },
+        };
     }
 
     async logout(refreshToken: string) {
@@ -87,8 +97,7 @@ export class AuthService {
 
         const regId = uuidv4();
 
-        const confirmLink =
-            this.config.get('REGISTRATION_CONFIRM_FRONTEND_URL') + regId;
+        const confirmLink = `${this.config.get('FRONTEND_URL')}/${this.config.get('REGISTRATION_CONFIRM_FRONTEND_ENDPOINT')}/${regId}`;
 
         try {
             await this.mailer.sendMail({
@@ -123,7 +132,7 @@ export class AuthService {
         );
     }
 
-    async registrationConfirm(regRegId: string): Promise<AuthTokens> {
+    async registrationConfirm(regRegId: string): Promise<AuthData> {
         const regReqKey = RedisKeys.registrationRequest(regRegId);
         const regJsonData = await this.redis.client.get(regReqKey);
 
@@ -150,18 +159,22 @@ export class AuthService {
             await this.tokenService.getAccessToken(tokensPayload);
         const refreshToken = await this.createSession(tokensPayload);
 
-        return { accessToken, refreshToken };
+        return {
+            tokens: { accessToken, refreshToken },
+            userData: { id: user.id, username: user.username },
+        };
     }
 
-    async refresh(refreshToken: string): Promise<AuthTokens> {
+    async refresh(refreshToken: string): Promise<AuthData> {
         const refreshTokenPayload =
             await this.tokenService.verifyRefreshToken(refreshToken);
-        const accessToken = await this.tokenService.getAccessToken(
-            refreshTokenPayload,
-        );
+        const accessToken =
+            await this.tokenService.getAccessToken(refreshTokenPayload);
+
+        const user = await this.getCurrentUser(refreshTokenPayload.userId);
         return {
-            accessToken,
-            refreshToken,
+            tokens: { accessToken, refreshToken },
+            userData: { id: user.id, username: user.username },
         };
     }
 

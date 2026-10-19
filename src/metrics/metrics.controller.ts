@@ -3,8 +3,10 @@ import {
     Controller,
     Delete,
     Get,
+    ParseIntPipe,
     Patch,
     Post,
+    Query,
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard.js';
@@ -12,8 +14,6 @@ import { MetricsService } from './metrics.service.js';
 import { RouteParams } from '../common/constants/route-params.js';
 import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard.js';
-import { UpdateMetricDto } from './dto/metric/update-metric.dto.js';
-import { CreateMetricDto } from './dto/metric/create-metric.dto.js';
 import {
     ApiBadRequestResponse,
     ApiCookieAuth,
@@ -22,7 +22,10 @@ import {
     ApiOkResponse,
 } from '@nestjs/swagger';
 import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
-import { ResponseMetricDto } from './dto/metric/response-metric.dto.js';
+import { ResponseMetricDto } from './dto/response-metric.dto.js';
+import { UpdateMetricDto } from './dto/update-metric.dto.js';
+import { CreateMetricDto } from './dto/create-metric.dto.js';
+import { MetricsRangeQuery } from './queries/metrics-range.query.js';
 
 @Controller(`projects/:${RouteParams.projectId}/metrics`)
 @ApiCookieAuth(AuthCookiesKeys.accessTokenKey)
@@ -35,8 +38,11 @@ export class MetricsController {
         description: "Array of project's metrics",
         type: [ResponseMetricDto]
     })
-    async findAll(@IntParam(RouteParams.projectId) projectId: number): Promise<ResponseMetricDto[]> {
-        return await this.metricsService.findAll(projectId);
+    async findMany(
+        @IntParam(RouteParams.projectId) projectId: number,
+        @Query() query: MetricsRangeQuery
+    ): Promise<ResponseMetricDto[]> {
+        return await this.metricsService.findAll(projectId, query.to, query.from);
     }
 
     @Patch(`:${RouteParams.metricId}`)
@@ -76,22 +82,5 @@ export class MetricsController {
         @IntParam(RouteParams.metricId) metricId: number,
     ) {
         await this.metricsService.remove(projectId, metricId);
-    }
-
-    @Delete(`:${RouteParams.metricId}/:${RouteParams.metricPointId}`)
-    @ApiOkResponse({
-        description: "Metric's point removed",
-    })
-    @ApiNotFoundResponse()
-    async removePoint(
-        @IntParam(RouteParams.projectId) projectId: number,
-        @IntParam(RouteParams.metricId) metricId: number,
-        @IntParam(RouteParams.metricPointId) metricPointId: number,
-    ) {
-        await this.metricsService.removePoint(
-            projectId,
-            metricId,
-            metricPointId,
-        );
     }
 }

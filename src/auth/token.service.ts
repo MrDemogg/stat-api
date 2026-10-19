@@ -4,10 +4,15 @@ import { TypedConfigService } from '../config/typedConfig.service.js';
 import { RedisService } from '../database/Redis/redis.service.js';
 import { RedisKeys } from '../database/Redis/redis.keys.js';
 import { HashingService } from './hashing.service.js';
+import { z } from 'zod';
+import { JwtPayload } from 'jsonwebtoken';
 
-export type TokenPayload = {
-    userId: number
-};
+export const TokenPayloadSchema = z.object({
+    userId: z.coerce.number(),
+});
+
+export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
+export type VerifiedTokenPayload = TokenPayload & JwtPayload;
 
 @Injectable()
 export class TokenService {
@@ -34,7 +39,9 @@ export class TokenService {
         let payload: TokenPayload;
 
         try {
-            payload = await this.jwt.verifyAsync(refreshToken);
+            const jwtPayload =
+                await this.jwt.verifyAsync<VerifiedTokenPayload>(refreshToken);
+            payload = TokenPayloadSchema.parse(jwtPayload);
         } catch {
             throw new UnauthorizedException('Refresh token is invalid');
         }
@@ -55,7 +62,9 @@ export class TokenService {
 
     async verifyAccessToken(accessToken: string): Promise<TokenPayload> {
         try {
-            return await this.jwt.verifyAsync(accessToken);
+            return TokenPayloadSchema.parse(
+                await this.jwt.verifyAsync(accessToken),
+            );
         } catch {
             throw new UnauthorizedException('Access token is invalid');
         }

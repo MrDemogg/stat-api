@@ -8,6 +8,7 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AuthCookiesKeys } from './auth/common/auth-cookies.keys.js';
+import { PrismaExceptionsFilter } from './database/Prisma/prisma-exceptions.filter.js';
 
 async function bootstrap() {
     const env: Configuration = configurationSchema.parse(process.env);
@@ -16,14 +17,19 @@ async function bootstrap() {
         {
             cookies: {
                 secret: env.COOKIES_SECRET
+            },
+            cors: {
+                origin: env.FRONTEND_URL,
+                credentials: true
             }
         }
     );
     app.use(cookieParser(env.COOKIES_SECRET))
 
     app.useGlobalPipes(new ValidationPipe({
-        transform: true
+        transform: true,
     }))
+    app.useGlobalFilters(new PrismaExceptionsFilter())
 
     const config = new DocumentBuilder()
         .setTitle('StatApi')

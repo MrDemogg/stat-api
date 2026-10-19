@@ -1,8 +1,11 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ResponseUserDto } from './response-user.dto.js';
 
-export class AuthUserDto extends ResponseUserDto {
+export class AuthUserDto {
     @IsString()
-    @MinLength(6)
     readonly password: string;
+    
+    @IsNotEmpty()
+    @IsString()
+    readonly username: string;
 }

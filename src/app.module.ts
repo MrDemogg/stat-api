@@ -7,6 +7,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
 import { AppController } from './app.controller.js';
 import { ProjectsModule } from './projects/projects.module.js';
 import { MetricsModule } from './metrics/metrics.module.js';
+import { MetricPointsModule } from './metric-points/metric-points.module.js';
 
 @Module({
     controllers: [AppController],
@@ -33,6 +34,7 @@ import { MetricsModule } from './metrics/metrics.module.js';
         AuthModule,
         ProjectsModule,
         MetricsModule,
+        MetricPointsModule
     ],
 })
 export class AppModule {}

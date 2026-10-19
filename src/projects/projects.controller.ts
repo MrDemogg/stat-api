@@ -12,10 +12,17 @@ import { AuthGuard } from '../auth/guards/auth.guard.js';
 import { CurrentUserId } from '../auth/decorators/user-id.decorator.js';
 import { RouteParams } from '../common/constants/route-params.js';
 import { IntParam } from '../common/decorators/int-param.decorator.js';
-import { ResponseProjectDto } from './dto/response-project.dto.js';
+import { ResponseProjectInfoDto } from './dto/response-project-info.dto.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
-import { ApiBadRequestResponse, ApiCookieAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+    ApiBadRequestResponse,
+    ApiConflictResponse,
+    ApiCookieAuth,
+    ApiCreatedResponse,
+    ApiNotFoundResponse,
+    ApiOkResponse,
+} from '@nestjs/swagger';
 import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
 
 @Controller('projects')
@@ -30,21 +37,36 @@ export class ProjectsController {
     @Get()
     @ApiOkResponse({
         description: "Array of user's projects",
-        type: [ResponseProjectDto]
+        type: [ResponseProjectInfoDto],
     })
     async findAll(
         @CurrentUserId() userId: number,
-    ): Promise<ResponseProjectDto[]> {
+    ): Promise<ResponseProjectInfoDto[]> {
         return this.projectsService.findAll(userId);
+    }
+
+    @Get(`:${RouteParams.projectId}`)
+    @ApiOkResponse({
+        description: "User's project",
+        type: ResponseProjectInfoDto
+    })
+    @ApiNotFoundResponse({
+        description: "Project not found"
+    })
+    async findOne(
+        @CurrentUserId() userId: number,
+        @IntParam(RouteParams.projectId) projectId: number
+    ): Promise<ResponseProjectInfoDto> { 
+        return this.projectsService.findOne(userId, projectId)
     }
 
     @Patch(`:${RouteParams.projectId}`)
     @ApiOkResponse({
-        description: "Updated project information"
+        description: 'Updated project information',
     })
     @ApiNotFoundResponse()
     @ApiBadRequestResponse({
-        description: "Title and description are empty"
+        description: 'Title and description are empty',
     })
     async update(
         @CurrentUserId() userId: number,
@@ -56,7 +78,10 @@ export class ProjectsController {
 
     @Post()
     @ApiCreatedResponse({
-        description: "Project created"
+        description: 'Project created',
+    })
+    @ApiConflictResponse({
+        description: "Project with this title already exists"
     })
     async create(
         @CurrentUserId() userId: number,
@@ -67,7 +92,7 @@ export class ProjectsController {
 
     @Delete(`:${RouteParams.projectId}`)
     @ApiOkResponse({
-        description: "Project removed"
+        description: 'Project removed',
     })
     @ApiNotFoundResponse()
     async remove(
