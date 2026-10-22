@@ -14,7 +14,7 @@ import {
     ApiOkResponse,
 } from '@nestjs/swagger';
 import { AuthCookiesKeys } from '../auth/common/auth-cookies.keys.js';
-import { RouteParams } from '../common/constants/route-params.js';
+import { RouteParams } from '../common/constants/route-params.constants.js';
 import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { MetricPointsService } from './metric-points.service.js';
 import { ResponseMetricPointDto } from './dto/response-metric-point.dto.js';

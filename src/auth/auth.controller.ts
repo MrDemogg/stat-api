@@ -25,7 +25,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { RouteParams } from '../common/constants/route-params.js';
+import { RouteParams } from '../common/constants/route-params.constants.js';
 import { ResponseUserDto } from './dto/response-user.dto.js';
 
 @Controller('auth')

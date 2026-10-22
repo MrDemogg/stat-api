@@ -1,7 +1,7 @@
 model Project {
     id Int @id @default(autoincrement())
     title String
-    description String
+    description String @default("")
 
     owner User @relation(fields: [ownerId], references: [id])
     ownerId Int

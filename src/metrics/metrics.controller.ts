@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard.js';
 import { MetricsService } from './metrics.service.js';
-import { RouteParams } from '../common/constants/route-params.js';
+import { RouteParams } from '../common/constants/route-params.constants.js';
 import { IntParam } from '../common/decorators/int-param.decorator.js';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard.js';
 import {

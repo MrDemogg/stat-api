@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateMetricDto {
     @IsString()
@@ -6,5 +6,6 @@ export class CreateMetricDto {
     readonly title: string;
 
     @IsString()
-    readonly description: string;
+    @IsOptional()
+    readonly description?: string;
 }

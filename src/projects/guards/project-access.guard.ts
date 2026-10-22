@@ -9,7 +9,7 @@ import { ExecutionContext } from '@nestjs/common/interfaces/features/execution-c
 import { Request } from 'express';
 import { PrismaService } from '../../database/Prisma/prisma.service.js';
 import { ReuqestUtils } from '../../common/utils/request.utils.js';
-import { RouteParams } from '../../common/constants/route-params.js';
+import { RouteParams } from '../../common/constants/route-params.constants.js';
 
 @Injectable()
 export class ProjectAccessGuard implements CanActivate {

@@ -1,5 +1,5 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
-import { CreateMetricPointDto } from './dto/create-metric-point.dto.js';
 import { ResponseMetricPointDto } from './dto/response-metric-point.dto.js';
 
 export class MetricPointsService {
@@ -9,18 +9,27 @@ export class MetricPointsService {
         projectId: number,
         metricId: number,
         from: Date,
-        to: Date, 
+        to: Date,
     ): Promise<ResponseMetricPointDto[]> {
-        return await this.prismaService.metricPoint.findMany({
+        const parsedPoints: ResponseMetricPointDto[] = []
+
+        const points = await this.prismaService.metricPoint.findMany({
             where: {
                 metricId,
                 metric: { projectId },
                 date: {
                     lte: to,
-                    gte: from
-                }
+                    gte: from,
+                },
             },
         });
+
+        points.forEach((point) => parsedPoints.push({
+            ...point,
+            [point.data]: JSON.parse(point.data)
+        }));
+
+        return parsedPoints;
     }
 
     async remove(projectId: number, metricId: number, pointId: number) {
@@ -35,10 +44,10 @@ export class MetricPointsService {
         });
     }
 
-    async create(ingestKey: string, pointInfo: CreateMetricPointDto) {
+    async create(ingestKey: string, pointInfo: unknown) {
         await this.prismaService.metricPoint.create({
             data: {
-                data: pointInfo.data,
+                data: JSON.stringify(pointInfo),
                 date: new Date(),
                 metric: {
                     connect: {

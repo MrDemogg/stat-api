@@ -1,8 +1,7 @@
-import { IsDate, IsNotEmpty, IsNumber } from "class-validator";
-import { CreateMetricPointDto } from "./create-metric-point.dto.js";
+import { IsDate, IsNotEmpty, IsNumber, IsString } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
-export class ResponseMetricPointDto extends CreateMetricPointDto {
+export class ResponseMetricPointDto {
     @IsNumber()
     @IsNotEmpty()
     readonly id: number;
@@ -13,4 +12,8 @@ export class ResponseMetricPointDto extends CreateMetricPointDto {
     @IsNotEmpty()
     @IsDate()
     readonly date: Date;
+
+    @IsNotEmpty()
+    @IsString()
+    readonly data: any;
 }
