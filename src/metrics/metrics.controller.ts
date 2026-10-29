@@ -36,13 +36,17 @@ export class MetricsController {
     @Get()
     @ApiOkResponse({
         description: "Array of project's metrics",
-        type: [ResponseMetricDto]
+        type: [ResponseMetricDto],
     })
     async findMany(
         @IntParam(RouteParams.projectId) projectId: number,
-        @Query() query: MetricsRangeQuery
+        @Query() query: MetricsRangeQuery,
     ): Promise<ResponseMetricDto[]> {
-        return await this.metricsService.findAll(projectId, query.to, query.from);
+        return await this.metricsService.findAll(
+            projectId,
+            query.to,
+            query.from,
+        );
     }
 
     @Patch(`:${RouteParams.metricId}`)
@@ -50,7 +54,8 @@ export class MetricsController {
         description: 'Metric update',
     })
     @ApiBadRequestResponse({
-        description: 'Title and description are not setted',
+        description:
+            'At least one metric parameter in the body must be changed and not undefined',
     })
     @ApiNotFoundResponse()
     async update(

@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Param, Post, RawBody } from '@ne
 import { RouteParams } from '../common/constants/route-params.constants.js';
 import { MetricPointsService } from './metric-points.service.js';
 import { ApiBadRequestResponse, ApiBody, ApiOkResponse } from '@nestjs/swagger';
+import { CreateMetricPointDto } from './dto/create-metric-point.dto.js';
 
 @Controller('ingest/metrics')
 export class MetricPointsIngestController {
@@ -19,8 +20,8 @@ export class MetricPointsIngestController {
     })
     async create(
         @Param(RouteParams.metricIngest) ingestKey: string,
-        @Body() body: unknown,
+        @Body() createMetricPointDto: CreateMetricPointDto,
     ) {
-        await this.metricPointsService.create(ingestKey, body);
+        await this.metricPointsService.create(ingestKey, createMetricPointDto);
     }
 }

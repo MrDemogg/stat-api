@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/Prisma/prisma.service.js';
 import { ResponseMetricPointDto } from './dto/response-metric-point.dto.js';
+import { CreateMetricPointDto } from './dto/create-metric-point.dto.js';
 
 export class MetricPointsService {
     constructor(private prismaService: PrismaService) {}
@@ -11,7 +12,7 @@ export class MetricPointsService {
         from: Date,
         to: Date,
     ): Promise<ResponseMetricPointDto[]> {
-        const parsedPoints: ResponseMetricPointDto[] = []
+        const parsedPoints: ResponseMetricPointDto[] = [];
 
         const points = await this.prismaService.metricPoint.findMany({
             where: {
@@ -24,10 +25,15 @@ export class MetricPointsService {
             },
         });
 
-        points.forEach((point) => parsedPoints.push({
-            ...point,
-            [point.data]: JSON.parse(point.data)
-        }));
+        points.forEach((point) =>
+            parsedPoints.push({
+                ...point,
+                ...(point.data && { data: JSON.parse(point.data) }),
+                ...(point.customization && {
+                    customization: JSON.parse(point.customization),
+                }),
+            }),
+        );
 
         return parsedPoints;
     }
@@ -44,10 +50,11 @@ export class MetricPointsService {
         });
     }
 
-    async create(ingestKey: string, pointInfo: unknown) {
+    async create(ingestKey: string, pointInfo: CreateMetricPointDto) {
         await this.prismaService.metricPoint.create({
             data: {
-                data: JSON.stringify(pointInfo),
+                customization: JSON.stringify(pointInfo.customization),
+                data: JSON.stringify(pointInfo.data),
                 date: new Date(),
                 metric: {
                     connect: {

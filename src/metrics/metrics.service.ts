@@ -28,16 +28,16 @@ export class MetricsService {
     }
 
     async update(projectId: number, id: number, newInfo: UpdateMetricDto) {
-        if (!newInfo.title && !newInfo.description) {
+        if (Object.values(newInfo).length === 0 || Object.values(newInfo).every((value) => value === undefined)) {
             throw new BadRequestException(
-                'Body must have title or description',
+                'At least one metric parameter in the body must be changed and not undefined',
             );
         }
 
         await this.prismaService.metric.update({
             where: {
-                id: id,
-                projectId: projectId,
+                id,
+                projectId,
             },
             data: newInfo,
         });
@@ -52,14 +52,19 @@ export class MetricsService {
             const ingestKey = uuidv4();
 
             try {
-                return await this.prismaService.metric.create({
+                await this.prismaService.metric.create({
                     data: {
                         title: info.title,
-                        description: info.title,
+                        description: info.description,
                         ingestKey: ingestKey,
-                        projectId: projectId,
+                        project: {
+                            connect: {
+                                id: projectId
+                            }
+                        }
                     },
                 });
+                return;
             } catch (e) {
                 // нельзя допустить чтобы цикл продолжался из-за ошибки об уникальности при условии,
                 // что причиной ошибки является title

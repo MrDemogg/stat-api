@@ -1,6 +1,6 @@
-import { IsArray, IsDefined, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsDefined, IsIn, IsNotEmpty, IsNumber, IsString } from "class-validator";
 import { CreateMetricDto } from "./create-metric.dto.js";
-import { ResponseMetricPointDto } from "../../metric-points/dto/response-metric-point.dto.js";
+import { MetricRenderModes } from "../../generated/prisma/enums.js";
 
 export class ResponseMetricDto extends CreateMetricDto { 
     @IsNumber()
@@ -13,4 +13,8 @@ export class ResponseMetricDto extends CreateMetricDto {
 
     @IsDefined()
     declare readonly description: string;
+
+    @IsString()
+    @IsIn(Object.keys(MetricRenderModes))
+    readonly renderMode: MetricRenderModes;
 }
